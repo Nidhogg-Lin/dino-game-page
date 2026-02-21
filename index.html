@@ -2,19 +2,77 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>奔跑吧！小猫鼠！</title>
     <style>
-        canvas {
-            border: 1px solid #000;
-            display: block;
-            margin: 50px auto;
+        /* 基础样式：隐藏滚动条，全屏显示 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            overflow: hidden;
+            background-color: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            width: 100vw;
+        }
+        /* 游戏 Canvas 样式：自适应屏幕，保持宽高比 */
+        #gameCanvas {
+            border: none;
+            max-width: 100vw;
+            max-height: 100vh;
+            object-fit: contain;
+        }
+        /* 竖屏提示样式：手机竖屏时显示 */
+        #rotateHint {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #000;
+            color: #fff;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            font-size: 24px;
+            z-index: 9999;
+        }
+        #rotateHint span {
+            margin-top: 20px;
+            font-size: 18px;
+            color: #aaa;
+        }
+        /* 横屏时隐藏提示 */
+        @media (orientation: portrait) {
+            #rotateHint {
+                display: flex;
+            }
+        }
+        @media (orientation: landscape) {
+            #rotateHint {
+                display: none;
+            }
         }
     </style>
 </head>
+
 <body>
+    <!-- 竖屏提示：手机竖屏时显示 -->
+    <div id="rotateHint">
+        📱 请将手机横屏游玩
+        <span>点击屏幕任意位置跳跃</span>
+    </div>
+
     <canvas id="gameCanvas" width="800" height="300"></canvas>
 
     <script>
+
         // ===================== 1. 预加载游戏图片和音频（纯前端相对路径） =====================
         const images = {
             bg: new Image(),
@@ -321,52 +379,73 @@ function gameLoop(loopTime) { // 把函数参数改名为 loopTime，彻底避�
         }
 
         // ===================== 4. 事件监听 =====================
-        // 点击页面初始化音频（规避自动播放限制）
-document.addEventListener('click', () => {
-    if (!audioInited) {
-        // 预加载所有音频
-        audios.bgm.load();
-        audios.hit.load();
-        audios.jump.load();
-        audioInited = true;
-        console.log("音频已初始化，背景音乐开始播放");
-    }
-    // 每次点击都尝试播放背景音乐（避免浏览器阻止）
-    if (audioInited && !dino.isDead && !finish) {
-        audios.bgm.play().catch(err => {});
-    }
-});
+       // 点击/触摸页面初始化音频（适配手机端）
+        function initAudio() {
+            if (!audioInited) {
+                audios.bgm.load();
+                audios.hit.load();
+                audios.jump.load();
+                audioInited = true;
+                console.log("音频已初始化，背景音乐开始播放");
+            }
+            if (audioInited && !dino.isDead && !finish) {
+                audios.bgm.play().catch(err => {});
+            }
+        }
 
-        // 跳跃事件
+        // 跳跃事件：支持键盘空格+鼠标点击+手机触摸
+        function jumpAction() {
+            dino.jump();
+            initAudio();
+        }
+
+        // 键盘事件
         document.addEventListener('keydown', (e) => {
             if (e.code === 'Space') {
                 e.preventDefault();
-                dino.jump();
+                jumpAction();
             }
         });
-        canvas.addEventListener('mousedown', () => {
-            dino.jump();
+
+        // 鼠标点击事件
+        canvas.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            jumpAction();
         });
 
-        // 等待图片加载完成后启动游戏
-        let loadedCount = 0;
-        const totalImages = Object.keys(images).length;
-        for (let key in images) {
-            images[key].onload = () => {
-                loadedCount++;
-                if (loadedCount === totalImages) {
-                    requestAnimationFrame(gameLoop);
-                }
-            };
-            images[key].onerror = (err) => {
-                console.error("图片加载失败：", key, images[key].src);
-                loadedCount++;
-                if (loadedCount === totalImages) requestAnimationFrame(gameLoop);
-            };
+        // 手机触摸事件（支持多点触摸，防止误触）
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            jumpAction();
+        }, { passive: false });
+
+        // 屏幕自适应：根据手机屏幕尺寸调整 Canvas 大小
+        function resizeCanvas() {
+            const screenWidth = window.innerWidth;
+            const screenHeight = window.innerHeight;
+            const gameRatio = 800 / 300; // 游戏原始宽高比
+            const screenRatio = screenWidth / screenHeight;
+
+            if (screenRatio > gameRatio) {
+                // 屏幕更宽：以高度为准
+                canvas.style.height = screenHeight + 'px';
+                canvas.style.width = (screenHeight * gameRatio) + 'px';
+            } else {
+                // 屏幕更高（横屏时）：以宽度为准
+                canvas.style.width = screenWidth + 'px';
+                canvas.style.height = (screenWidth / gameRatio) + 'px';
+            }
         }
+
+        // 窗口大小改变时重新调整
+        window.addEventListener('resize', resizeCanvas);
+        // 页面加载时先调整一次
+        resizeCanvas();
+
     </script>
 </body>
 </html>
+
 
 
 
