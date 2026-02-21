@@ -253,11 +253,12 @@
             ctx.drawImage(dino.image, dino.x, dino.y);
 
             // 障碍物生成逻辑（避免2秒无障碍物）
-            addObstacleTimer += 20;
-            const currentTime = addObstacleTimer;
-            const normalGenerate = currentTime - lastObstacleTime >= 2000 && 
-                                   Math.random() * 100 > 60 && 
-                                   obstacles.length < 3;
+    addObstacleTimer += 20;
+    const obsTime = addObstacleTimer; // ✅ 修复：改名为 obsTime，避免重复声明
+    const normalGenerate = obsTime - lastObstacleTime >= 2000 && 
+                           Math.random() * 100 > 60 && 
+                           obstacles.length < 3;
+    const forceGenerate = obsTime - lastObstacleTime >= 2200 && obstacles.length < 3;
             const forceGenerate = currentTime - lastObstacleTime >= 2200 && obstacles.length < 3;
             
             if (normalGenerate || forceGenerate) {
@@ -363,3 +364,4 @@
     </script>
 </body>
 </html>
+
