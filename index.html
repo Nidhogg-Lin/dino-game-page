@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>奔跑吧！小猫鼠！</title>
     <style>
-        /* 基础样式：隐藏滚动条，全屏显示 */
+        /* 基础样式：全屏、隐藏滚动条 */
         * {
             margin: 0;
             padding: 0;
@@ -20,14 +20,15 @@
             height: 100vh;
             width: 100vw;
         }
-        /* 游戏 Canvas 样式：自适应屏幕，保持宽高比 */
+        /* 游戏 Canvas 样式：简化版，直接占据最大可用空间 */
         #gameCanvas {
             border: none;
-            max-width: 100vw;
+            width: 100vw;
+            height: auto;
             max-height: 100vh;
             object-fit: contain;
         }
-        /* 竖屏提示样式：手机竖屏时显示 */
+        /* 竖屏提示：简化版，确保横屏后能隐藏 */
         #rotateHint {
             position: fixed;
             top: 0;
@@ -36,7 +37,7 @@
             height: 100vh;
             background-color: #000;
             color: #fff;
-            display: none;
+            display: flex;
             justify-content: center;
             align-items: center;
             flex-direction: column;
@@ -48,15 +49,10 @@
             font-size: 18px;
             color: #aaa;
         }
-        /* 横屏时隐藏提示 */
-        @media (orientation: portrait) {
-            #rotateHint {
-                display: flex;
-            }
-        }
+        /* 横屏时强制隐藏提示 */
         @media (orientation: landscape) {
             #rotateHint {
-                display: none;
+                display: none !important;
             }
         }
     </style>
@@ -378,8 +374,9 @@ function gameLoop(loopTime) { // 把函数参数改名为 loopTime，彻底避�
             requestAnimationFrame(gameLoop);
         }
 
-        // ===================== 4. 事件监听 =====================
-       // 点击/触摸页面初始化音频（适配手机端）
+
+        // ===================== 4. 事件监听（简化版，确保横屏后显示） =====================
+        // 点击/触摸页面初始化音频（适配手机端）
         function initAudio() {
             if (!audioInited) {
                 audios.bgm.load();
@@ -413,28 +410,18 @@ function gameLoop(loopTime) { // 把函数参数改名为 loopTime，彻底避�
             jumpAction();
         });
 
-        // 手机触摸事件（支持多点触摸，防止误触）
+        // 手机触摸事件
         canvas.addEventListener('touchstart', (e) => {
             e.preventDefault();
             jumpAction();
         }, { passive: false });
 
-        // 屏幕自适应：根据手机屏幕尺寸调整 Canvas 大小
+        // ✅ 简化版屏幕自适应：直接让 Canvas 占据最大空间
         function resizeCanvas() {
-            const screenWidth = window.innerWidth;
-            const screenHeight = window.innerHeight;
-            const gameRatio = 800 / 300; // 游戏原始宽高比
-            const screenRatio = screenWidth / screenHeight;
-
-            if (screenRatio > gameRatio) {
-                // 屏幕更宽：以高度为准
-                canvas.style.height = screenHeight + 'px';
-                canvas.style.width = (screenHeight * gameRatio) + 'px';
-            } else {
-                // 屏幕更高（横屏时）：以宽度为准
-                canvas.style.width = screenWidth + 'px';
-                canvas.style.height = (screenWidth / gameRatio) + 'px';
-            }
+            // 强制重绘 Canvas，避免横屏后黑屏
+            const temp = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            ctx.putImageData(temp, 0, 0);
+            console.log("屏幕尺寸变化，Canvas 已重绘");
         }
 
         // 窗口大小改变时重新调整
@@ -442,9 +429,13 @@ function gameLoop(loopTime) { // 把函数参数改名为 loopTime，彻底避�
         // 页面加载时先调整一次
         resizeCanvas();
 
+        // ===================== 5. 等待图片加载完成后启动游戏 =====================
+        // ...（这里保持你之前的图片加载代码不变）...
+
     </script>
 </body>
 </html>
+
 
 
 
