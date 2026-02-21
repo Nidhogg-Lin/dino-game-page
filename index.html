@@ -25,16 +25,17 @@
         };
 
         // 音频对象（简化版，避免资源占用）
-        const audios = {
-            bgm: new Audio("./music/background.wav"),
-            hit: new Audio("./music/hit.wav"),
-            jump: new Audio("./music/jump.wav")
-        };
-        // 音频基础配置
-        audios.bgm.volume = 0.3;
-        audios.hit.volume = 0.5;
-        audios.jump.volume = 0.5;
-        let audioInited = false;
+const audios = {
+    bgm: new Audio("./music/background.wav"),
+    hit: new Audio("./music/hit.wav"),
+    jump: new Audio("./music/jump.wav")
+};
+// 音频配置：背景音乐循环，音量适中
+audios.bgm.loop = true;
+audios.bgm.volume = 0.4;
+audios.hit.volume = 0.6;
+audios.jump.volume = 0.6;
+let audioInited = false;
 
         // 图片路径（对应 GitHub 仓库的 image/ 文件夹）
         images.bg.src = "./image/背景.png";
@@ -211,10 +212,7 @@ function checkCollision(rect1, rect2) {
 
 // ✅ 修复版：轻量版游戏主循环（无重复声明）
 function gameLoop(loopTime) { // 把函数参数改名为 loopTime，彻底避免冲突
-    if (loopTime - lastTime < 1000/30) {
-        requestAnimationFrame(gameLoop);
-        return;
-    }
+
     lastTime = loopTime;
 
     if (finish && !gameOverLock) {
@@ -324,14 +322,20 @@ function gameLoop(loopTime) { // 把函数参数改名为 loopTime，彻底避�
 
         // ===================== 4. 事件监听 =====================
         // 点击页面初始化音频（规避自动播放限制）
-        document.addEventListener('click', () => {
-            if (!audioInited) {
-                audios.bgm.load();
-                audios.hit.load();
-                audios.jump.load();
-                audioInited = true;
-            }
-        });
+document.addEventListener('click', () => {
+    if (!audioInited) {
+        // 预加载所有音频
+        audios.bgm.load();
+        audios.hit.load();
+        audios.jump.load();
+        audioInited = true;
+        console.log("音频已初始化，背景音乐开始播放");
+    }
+    // 每次点击都尝试播放背景音乐（避免浏览器阻止）
+    if (audioInited && !dino.isDead && !finish) {
+        audios.bgm.play().catch(err => {});
+    }
+});
 
         // 跳跃事件
         document.addEventListener('keydown', (e) => {
@@ -363,5 +367,6 @@ function gameLoop(loopTime) { // 把函数参数改名为 loopTime，彻底避�
     </script>
 </body>
 </html>
+
 
 
