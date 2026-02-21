@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <title>奔跑吧！小猫鼠！</title>
-    {% load static %}
     <style>
         canvas {
             border: 1px solid #000;
@@ -16,7 +15,7 @@
     <canvas id="gameCanvas" width="800" height="300"></canvas>
 
     <script>
-        // ===================== 1. 预加载游戏图片和音频 =====================
+        // ===================== 1. 预加载游戏图片和音频（纯前端相对路径） =====================
         const images = {
             bg: new Image(),
             dino1: new Image(), dino2: new Image(), dino3: new Image(),
@@ -24,32 +23,34 @@
             stone: new Image(), cacti: new Image(), boom: new Image(),
             mechanicalCat: new Image(), mechanicalMouse: new Image()
         };
-        // ========== 修复2：预加载音频（最简便方式：HTML5 Audio） ==========
-        const audios = {
-            bgm: new Audio("{% static 'music/background.wav' %}"), // BGM
-            hit: new Audio("{% static 'music/hit.wav' %}"), // 碰撞音效
-            jump: new Audio("{% static 'music/jump.wav' %}") // 跳跃音效
-        };
-        // 设置BGM循环播放
-        audios.bgm.loop = true;
-        audios.bgm.volume = 0.5; // BGM音量0.5，避免太吵
 
-        // 图片路径
-        images.bg.src = "{% static 'image/背景.png' %}";
-        images.dino1.src = "{% static 'image/鼠鼠奔跑1.png' %}";
-        images.dino2.src = "{% static 'image/鼠鼠奔跑2.png' %}";
-        images.dino3.src = "{% static 'image/常态鼠鼠.png' %}";
-        images.dino4.src = "{% static 'image/鼠鼠寄了.png' %}";
-        images.dino5.src = "{% static 'image/化灰.png' %}";
-        images.dino6.src = "{% static 'image/闭眼.png' %}";
-        images.stone.src = "{% static 'image/石头.png' %}";
-        images.cacti.src = "{% static 'image/仙人掌.png' %}";
-        images.boom.src = "{% static 'image/爆炸.png' %}";
-        images.mechanicalCat.src = "{% static 'image/机械猫.png' %}";
-        images.mechanicalMouse.src = "{% static 'image/机械鼠.png' %}";
+        // 音频对象（简化版，避免资源占用）
+        const audios = {
+            bgm: new Audio("./music/background.wav"),
+            hit: new Audio("./music/hit.wav"),
+            jump: new Audio("./music/jump.wav")
+        };
+        // 音频基础配置
+        audios.bgm.volume = 0.3;
+        audios.hit.volume = 0.5;
+        audios.jump.volume = 0.5;
+        let audioInited = false;
+
+        // 图片路径（对应 GitHub 仓库的 image/ 文件夹）
+        images.bg.src = "./image/背景.png";
+        images.dino1.src = "./image/鼠鼠奔跑1.png";
+        images.dino2.src = "./image/鼠鼠奔跑2.png";
+        images.dino3.src = "./image/常态鼠鼠.png";
+        images.dino4.src = "./image/鼠鼠寄了.png";
+        images.dino5.src = "./image/化灰.png";
+        images.dino6.src = "./image/闭眼.png";
+        images.stone.src = "./image/石头.png";
+        images.cacti.src = "./image/仙人掌.png";
+        images.boom.src = "./image/爆炸.png";
+        images.mechanicalCat.src = "./image/机械猫.png";
+        images.mechanicalMouse.src = "./image/机械鼠.png";
 
         // ===================== 2. 定义JS类 =====================
-        // 2.1 恐龙类（修复1：死亡后落地）
         class Dinosaur {
             constructor() {
                 this.x = 50;
@@ -65,7 +66,6 @@
 
             move() {
                 if (!this.isDead) {
-                    // 没死亡时：正常移动、跳跃、踏步
                     this.step();
                     if (this.jumpState) {
                         if (this.y >= this.LOWEST_Y) this.jumpValue = -4;
@@ -74,11 +74,11 @@
                         if (this.y >= this.LOWEST_Y) this.jumpState = false;
                     }
                 } else {
-                    // ========== 修复1：死亡后继续下落，直到落地 ==========
+                    // 死亡后落地逻辑
                     if (this.y < this.LOWEST_Y) {
-                        this.y += 4; // 下落速度，和跳跃上升速度一致
+                        this.y += 4;
                         if (this.y > this.LOWEST_Y) {
-                            this.y = this.LOWEST_Y; // 落地后固定位置
+                            this.y = this.LOWEST_Y;
                         }
                     }
                 }
@@ -87,9 +87,11 @@
             jump() {
                 if (!this.jumpState && !this.isDead) {
                     this.jumpState = true;
-                    // ========== 修复2：播放跳跃音效 ==========
-                    audios.jump.currentTime = 0; // 重置播放位置，避免连续跳跃没声音
-                    audios.jump.play();
+                    // 音频初始化后播放跳跃音效
+                    if (audioInited) {
+                        audios.jump.currentTime = 0;
+                        audios.jump.play().catch(err => {});
+                    }
                 }
             }
 
@@ -111,7 +113,6 @@
             getHeadBounds() { return {x: this.x+66, y: this.y+25, w:32, h:22}; }
         }
 
-        // 2.2 障碍物类
         class Obstacle {
             constructor() {
                 this.x = 800;
@@ -131,12 +132,12 @@
                         break;
                     case 1: // 石头
                         this.image = images.stone;
-                        this.y = 300 - this.image.height - 9;
+                        this.y = 300 - this.image.height - 6;
                         this.speed = 3;
                         break;
                     case 2: // 机械猫
                         this.image = images.mechanicalCat;
-                        this.y = 300 - this.image.height - 8;
+                        this.y = 300 - this.image.height - 5;
                         this.speed = 5;
                         break;
                     case 3: // 机械鼠
@@ -197,10 +198,10 @@
         let gameOverLock = false;
         let bgX = 0;
         const BG_SPEED = 3;
-        // ========== 修复3：记录上一次生成障碍物的时间 ==========
         let lastObstacleTime = 0;
+        let lastTime = 0;
 
-        // 碰撞检测函数
+        // 碰撞检测
         function checkCollision(rect1, rect2) {
             return rect1.x < rect2.x + rect2.w &&
                    rect1.x + rect1.w > rect2.x &&
@@ -208,11 +209,16 @@
                    rect1.y + rect1.h > rect2.y;
         }
 
-        // 游戏主循环
-        function gameLoop() {
+        // 轻量版游戏主循环（限制30FPS，适配GitHub Pages）
+        function gameLoop(currentTime) {
+            if (currentTime - lastTime < 1000/30) {
+                requestAnimationFrame(gameLoop);
+                return;
+            }
+            lastTime = currentTime;
+
             if (finish && !gameOverLock) {
                 gameOverLock = true;
-                // ========== 修复2：死亡时暂停BGM ==========
                 audios.bgm.pause();
                 setTimeout(() => {
                     alert("游戏结束！得分：" + score);
@@ -224,58 +230,46 @@
                     finish = false;
                     gameOverLock = false;
                     bgX = 0;
-                    lastObstacleTime = 0; // 重置障碍物生成时间
-                    // ========== 修复2：重新开始时重置并播放BGM ==========
+                    lastObstacleTime = 0;
                     audios.bgm.currentTime = 0;
-                    audios.bgm.play();
                 }, 500);
             }
 
-            // 背景滚动
-if (images.bg.complete && images.bg.naturalWidth > 0) {
-    // 只有没死亡时才滚动背景
-    if (!dino.isDead) {
-        bgX -= BG_SPEED; // 背景向左移动
-        // 当第一张背景图完全移出屏幕时，重置x坐标，实现无缝滚动
-        if (bgX <= -canvas.width) {
-            bgX = 0;
-        }
-    }
-    // 绘制两张背景图，拼接实现无缝滚动
-    ctx.drawImage(images.bg, bgX, 0, canvas.width, canvas.height);
-    ctx.drawImage(images.bg, bgX + canvas.width, 0, canvas.width, canvas.height);
-} else {
-    // 兜底：背景加载失败时，用纯白色填充，不再用蓝绿色
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    console.error("背景图加载失败，请检查路径和文件名！", images.bg.src);
-}
+            // 背景绘制（静态+滚动兼容）
+            if (images.bg.complete && images.bg.naturalWidth > 0) {
+                if (!dino.isDead) {
+                    bgX -= BG_SPEED;
+                    if (bgX <= -canvas.width) bgX = 0;
+                }
+                ctx.drawImage(images.bg, bgX, 0, canvas.width, canvas.height);
+                ctx.drawImage(images.bg, bgX + canvas.width, 0, canvas.width, canvas.height);
+            } else {
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
 
-            // 恐龙移动和绘制
+            // 恐龙绘制
             dino.move();
             ctx.drawImage(dino.image, dino.x, dino.y);
 
-            // ========== 修复3：障碍物生成逻辑优化 ==========
+            // 障碍物生成逻辑（避免2秒无障碍物）
             addObstacleTimer += 20;
             const currentTime = addObstacleTimer;
-            // 1. 正常生成：间隔2000ms，概率40%，最多3个
             const normalGenerate = currentTime - lastObstacleTime >= 2000 && 
                                    Math.random() * 100 > 60 && 
                                    obstacles.length < 3;
-            // 2. 强制生成：超过2200ms还没生成，强制生成1个（保证不超过2秒无障碍物）
             const forceGenerate = currentTime - lastObstacleTime >= 2200 && obstacles.length < 3;
             
             if (normalGenerate || forceGenerate) {
                 obstacles.push(new Obstacle());
-                lastObstacleTime = currentTime; // 更新上一次生成时间
+                lastObstacleTime = currentTime;
             }
 
-            // 障碍物遍历逻辑
+            // 障碍物绘制&碰撞检测
             for (let i = 0; i < obstacles.length; i++) {
                 let o = obstacles[i];
                 if (o.isLive()) {
                     o.move();
-                    // 机械鼠缩放绘制
                     if (o.type === 3 && o.scale) {
                         ctx.save();
                         ctx.translate(o.x + o.image.width/2, o.y + o.image.height/2);
@@ -286,16 +280,18 @@ if (images.bg.complete && images.bg.naturalWidth > 0) {
                         ctx.drawImage(o.image, o.x, o.y);
                     }
                     
-                    // 碰撞检测
+                    // 碰撞检测+音效
                     if (!dino.isDead && !finish) {
                         let footBounds = dino.getFootBounds();
                         let headBounds = dino.getHeadBounds();
                         let obsBounds = o.getBounds();
                         if (checkCollision(footBounds, obsBounds) || checkCollision(headBounds, obsBounds)) {
                             finish = true;
-                            // ========== 修复2：播放碰撞音效 ==========
-                            audios.hit.currentTime = 0;
-                            audios.hit.play();
+                            if (audioInited) {
+                                audios.hit.currentTime = 0;
+                                audios.hit.play().catch(err => {});
+                                audios.bgm.play().catch(err => {});
+                            }
                             if (o.isAshType()) {
                                 o.boom();
                                 dino.dieAsh();
@@ -323,11 +319,21 @@ if (images.bg.complete && images.bg.naturalWidth > 0) {
             ctx.font = 'bold 24px 黑体';
             ctx.fillText(String(score).padStart(6, '0'), 700, 30);
 
-            // 继续循环
             requestAnimationFrame(gameLoop);
         }
 
         // ===================== 4. 事件监听 =====================
+        // 点击页面初始化音频（规避自动播放限制）
+        document.addEventListener('click', () => {
+            if (!audioInited) {
+                audios.bgm.load();
+                audios.hit.load();
+                audios.jump.load();
+                audioInited = true;
+            }
+        });
+
+        // 跳跃事件
         document.addEventListener('keydown', (e) => {
             if (e.code === 'Space') {
                 e.preventDefault();
@@ -338,24 +344,20 @@ if (images.bg.complete && images.bg.naturalWidth > 0) {
             dino.jump();
         });
 
-        // 等待所有图片加载完成后开始游戏
+        // 等待图片加载完成后启动游戏
         let loadedCount = 0;
         const totalImages = Object.keys(images).length;
         for (let key in images) {
             images[key].onload = () => {
                 loadedCount++;
                 if (loadedCount === totalImages) {
-                    // ========== 修复2：游戏开始时播放BGM ==========
-                    audios.bgm.play().catch(err => {
-                        console.log("浏览器阻止自动播放，请点击页面后开始游戏");
-                    });
-                    gameLoop();
+                    requestAnimationFrame(gameLoop);
                 }
             };
             images[key].onerror = (err) => {
                 console.error("图片加载失败：", key, images[key].src);
                 loadedCount++;
-                if (loadedCount === totalImages) gameLoop();
+                if (loadedCount === totalImages) requestAnimationFrame(gameLoop);
             };
         }
     </script>
