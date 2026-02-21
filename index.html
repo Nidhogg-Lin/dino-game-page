@@ -4,72 +4,34 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>奔跑吧！小猫鼠！</title>
-    <style>
-        /* 基础样式：全屏、隐藏滚动条 */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            overflow: hidden;
-            background-color: #000;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            width: 100vw;
-        }
-        /* 游戏 Canvas 样式：简化版，直接占据最大可用空间 */
-        #gameCanvas {
-            border: none;
-            width: 100vw;
-            height: auto;
-            max-height: 100vh;
-            object-fit: contain;
-        }
-        /* 竖屏提示：简化版，确保横屏后能隐藏 */
-        #rotateHint {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background-color: #000;
-            color: #fff;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-            font-size: 24px;
-            z-index: 9999;
-        }
-        #rotateHint span {
-            margin-top: 20px;
-            font-size: 18px;
-            color: #aaa;
-        }
-        /* 横屏时强制隐藏提示 */
-        @media (orientation: landscape) {
-            #rotateHint {
-                display: none !important;
-            }
-        }
-    </style>
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+    body {
+        overflow: hidden;
+        background-color: #000;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        width: 100vw;
+    }
+    #gameCanvas {
+        border: none;
+        max-width: 100vw;
+        max-height: 100vh;
+        object-fit: contain;
+    }
+</style>
 </head>
-
 <body>
-    <!-- 竖屏提示：手机竖屏时显示 -->
-    <div id="rotateHint">
-        📱 请将手机横屏游玩
-        <span>点击屏幕任意位置跳跃</span>
-    </div>
-
     <canvas id="gameCanvas" width="800" height="300"></canvas>
 
     <script>
-
-        // ===================== 1. 预加载游戏图片和音频（纯前端相对路径） =====================
+        // ===================== 1. 预加载游戏图片和音频 =====================
         const images = {
             bg: new Image(),
             dino1: new Image(), dino2: new Image(), dino3: new Image(),
@@ -78,20 +40,17 @@
             mechanicalCat: new Image(), mechanicalMouse: new Image()
         };
 
-        // 音频对象（简化版，避免资源占用）
-const audios = {
-    bgm: new Audio("./music/background.wav"),
-    hit: new Audio("./music/hit.wav"),
-    jump: new Audio("./music/jump.wav")
-};
-// 音频配置：背景音乐循环，音量适中
-audios.bgm.loop = true;
-audios.bgm.volume = 0.4;
-audios.hit.volume = 0.6;
-audios.jump.volume = 0.6;
-let audioInited = false;
+        const audios = {
+            bgm: new Audio("./music/background.wav"),
+            hit: new Audio("./music/hit.wav"),
+            jump: new Audio("./music/jump.wav")
+        };
+        audios.bgm.loop = true;
+        audios.bgm.volume = 0.4;
+        audios.hit.volume = 0.6;
+        audios.jump.volume = 0.6;
+        let audioInited = false;
 
-        // 图片路径（对应 GitHub 仓库的 image/ 文件夹）
         images.bg.src = "./image/背景.png";
         images.dino1.src = "./image/鼠鼠奔跑1.png";
         images.dino2.src = "./image/鼠鼠奔跑2.png";
@@ -114,7 +73,7 @@ let audioInited = false;
                 this.jumpValue = 0;
                 this.jumpState = false;
                 this.stepTimer = 0;
-                this.JUMP_HIGHT = 100;
+                this.JUMP_HEIGHT = 100;
                 this.LOWEST_Y = 205;
                 this.isDead = false;
             }
@@ -123,13 +82,15 @@ let audioInited = false;
                 if (!this.isDead) {
                     this.step();
                     if (this.jumpState) {
-                        if (this.y >= this.LOWEST_Y) this.jumpValue = -4;
-                        if (this.y <= this.LOWEST_Y - this.JUMP_HIGHT) this.jumpValue = 4;
                         this.y += this.jumpValue;
-                        if (this.y >= this.LOWEST_Y) this.jumpState = false;
+                        this.jumpValue += 0.8;
+                        if (this.y >= this.LOWEST_Y) {
+                            this.y = this.LOWEST_Y;
+                            this.jumpState = false;
+                            this.jumpValue = 0;
+                        }
                     }
                 } else {
-                    // 死亡后落地逻辑
                     if (this.y < this.LOWEST_Y) {
                         this.y += 4;
                         if (this.y > this.LOWEST_Y) {
@@ -142,7 +103,7 @@ let audioInited = false;
             jump() {
                 if (!this.jumpState && !this.isDead) {
                     this.jumpState = true;
-                    // 音频初始化后播放跳跃音效
+                    this.jumpValue = -12;
                     if (audioInited) {
                         audios.jump.currentTime = 0;
                         audios.jump.play().catch(err => {});
@@ -153,10 +114,10 @@ let audioInited = false;
             step() {
                 const tmp = Math.floor(this.stepTimer / 280) % 4;
                 switch (tmp) {
-                    case 1: this.image = images.dino1; break;
-                    case 2: this.image = images.dino2; break;
+                    case 0: this.image = images.dino1; break;
+                    case 1: this.image = images.dino2; break;
+                    case 2: this.image = images.dino3; break;
                     case 3: this.image = images.dino6; break;
-                    default: this.image = images.dino3;
                 }
                 this.stepTimer += 20;
             }
@@ -180,22 +141,22 @@ let audioInited = false;
                 this.scale = 1;
 
                 switch (this.type) {
-                    case 0: // 仙人掌
+                    case 0:
                         this.image = images.cacti;
                         this.y = 300 - this.image.height - 8;
                         this.speed = 3;
                         break;
-                    case 1: // 石头
+                    case 1:
                         this.image = images.stone;
                         this.y = 300 - this.image.height - 6;
                         this.speed = 3;
                         break;
-                    case 2: // 机械猫
+                    case 2:
                         this.image = images.mechanicalCat;
                         this.y = 300 - this.image.height - 5;
                         this.speed = 5;
                         break;
-                    case 3: // 机械鼠
+                    case 3:
                         this.image = images.mechanicalMouse;
                         this.y = 300 - this.image.height;
                         this.speed = 4.5;
@@ -224,15 +185,13 @@ let audioInited = false;
 
             getBounds() {
                 if (this.type === 0) return {x: this.x+7, y: this.y, w:15, h: this.image.height};
-                if (this.type === 1) return {x: this.x+5, y: this.y+4, w:23, h:21};
-                if (this.type === 2) return {x: this.x+5, y: this.y+2, w:49, h:28};
-                if (this.type === 3) {
-                    return {x: this.x+6*this.scale, y: this.y+3*this.scale, w:52*this.scale, h:46*this.scale};
-                }
+                if (this.type === 1) return {x: this.x+5, y: this.y+4, w:23, h: this.image.height-4};
+                if (this.type === 2) return {x: this.x+5, y: this.y+2, w:49, h: this.image.height-2};
+                if (this.type === 3) return {x: this.x+6*this.scale, y: this.y+3*this.scale, w:52*this.scale, h: this.image.height-3*this.scale};
                 return {x: this.x, y: this.y, w: this.image.width, h: this.image.height};
             }
 
-            isLive() { 
+            isAlive() { 
                 if (this.isBoom) {
                     this.boomTimer += 20;
                     return this.boomTimer < 500;
@@ -241,86 +200,82 @@ let audioInited = false;
             }
         }
 
-// ===================== 3. 游戏主逻辑 =====================
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
-let dino = new Dinosaur();
-let obstacles = [new Obstacle()];
-let addObstacleTimer = 0;
-let score = 0;
-let scoreTimer = 0;
-let finish = false;
-let gameOverLock = false;
-let bgX = 0;
-const BG_SPEED = 3;
-let lastObstacleTime = 0;
-let lastTime = 0;
+        // ===================== 3. 游戏主逻辑 =====================
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        let dino = new Dinosaur();
+        let obstacles = [new Obstacle()];
+        let addObstacleTimer = 0;
+        let score = 0;
+        let scoreTimer = 0;
+        let finish = false;
+        let gameOverLock = false;
+        let bgX = 0;
+        const BG_SPEED = 3;
+        let lastObstacleTime = 0;
+        let lastTime = 0;
 
-// 碰撞检测
-function checkCollision(rect1, rect2) {
-    return rect1.x < rect2.x + rect2.w &&
-           rect1.x + rect1.w > rect2.x &&
-           rect1.y < rect2.y + rect2.h &&
-           rect1.y + rect1.h > rect2.y;
-}
-
-// ✅ 修复版：轻量版游戏主循环（无重复声明）
-function gameLoop(loopTime) { // 把函数参数改名为 loopTime，彻底避免冲突
-
-    lastTime = loopTime;
-
-    if (finish && !gameOverLock) {
-        gameOverLock = true;
-        audios.bgm.pause();
-        setTimeout(() => {
-            alert("游戏结束！得分：" + score);
-            dino = new Dinosaur();
-            obstacles = [new Obstacle()];
-            addObstacleTimer = 0;
-            score = 0;
-            scoreTimer = 0;
-            finish = false;
-            gameOverLock = false;
-            bgX = 0;
-            lastObstacleTime = 0;
-            audios.bgm.currentTime = 0;
-        }, 500);
-    }
-
-    // 背景绘制（静态+滚动兼容）
-    if (images.bg.complete && images.bg.naturalWidth > 0) {
-        if (!dino.isDead) {
-            bgX -= BG_SPEED;
-            if (bgX <= -canvas.width) bgX = 0;
+        function checkCollision(rect1, rect2) {
+            return rect1.x < rect2.x + rect2.w &&
+                   rect1.x + rect1.w > rect2.x &&
+                   rect1.y < rect2.y + rect2.h &&
+                   rect1.y + rect1.h > rect2.y;
         }
-        ctx.drawImage(images.bg, bgX, 0, canvas.width, canvas.height);
-        ctx.drawImage(images.bg, bgX + canvas.width, 0, canvas.width, canvas.height);
-    } else {
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-    }
 
-    // 恐龙绘制
-    dino.move();
-    ctx.drawImage(dino.image, dino.x, dino.y);
+        function gameLoop(loopTime) {
+            lastTime = loopTime;
 
-    // ✅ 修复版：障碍物生成逻辑（变量名改为 obsTime）
-    addObstacleTimer += 20;
-    const obsTime = addObstacleTimer;
-    const normalGenerate = obsTime - lastObstacleTime >= 2000 && 
-                           Math.random() * 100 > 60 && 
-                           obstacles.length < 3;
-    const forceGenerate = obsTime - lastObstacleTime >= 2200 && obstacles.length < 3;
-    
-    if (normalGenerate || forceGenerate) {
-        obstacles.push(new Obstacle());
-        lastObstacleTime = obsTime;
-    }
+            if (finish && !gameOverLock) {
+                gameOverLock = true;
+                audios.bgm.pause();
+                setTimeout(() => {
+                    alert("游戏结束！得分：" + score);
+                    dino = new Dinosaur();
+                    obstacles = [new Obstacle()];
+                    addObstacleTimer = 0;
+                    score = 0;
+                    scoreTimer = 0;
+                    finish = false;
+                    gameOverLock = false;
+                    bgX = 0;
+                    lastObstacleTime = 0;
+                    audios.bgm.currentTime = 0;
+                    if (audioInited) {
+                        audios.bgm.play().catch(err => {});
+                    }
+                }, 500);
+            }
 
-            // 障碍物绘制&碰撞检测
+            if (images.bg.complete && images.bg.naturalWidth > 0) {
+                if (!dino.isDead) {
+                    bgX -= BG_SPEED;
+                    if (bgX <= -canvas.width) bgX = 0;
+                }
+                ctx.drawImage(images.bg, bgX, 0, canvas.width, canvas.height);
+                ctx.drawImage(images.bg, bgX + canvas.width, 0, canvas.width, canvas.height);
+            } else {
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+
+            dino.move();
+            ctx.drawImage(dino.image, dino.x, dino.y);
+
+            addObstacleTimer += 20;
+            const obsTime = addObstacleTimer;
+            const normalGenerate = obsTime - lastObstacleTime >= 2000 && 
+                                   Math.random() * 100 > 60 && 
+                                   obstacles.length < 3;
+            const forceGenerate = obsTime - lastObstacleTime >= 2200 && obstacles.length < 3;
+            
+            if (normalGenerate || forceGenerate) {
+                obstacles.push(new Obstacle());
+                lastObstacleTime = obsTime;
+            }
+
             for (let i = 0; i < obstacles.length; i++) {
                 let o = obstacles[i];
-                if (o.isLive()) {
+                if (o.isAlive()) {
                     o.move();
                     if (o.type === 3 && o.scale) {
                         ctx.save();
@@ -332,7 +287,6 @@ function gameLoop(loopTime) { // 把函数参数改名为 loopTime，彻底避�
                         ctx.drawImage(o.image, o.x, o.y);
                     }
                     
-                    // 碰撞检测+音效
                     if (!dino.isDead && !finish) {
                         let footBounds = dino.getFootBounds();
                         let headBounds = dino.getHeadBounds();
@@ -342,7 +296,6 @@ function gameLoop(loopTime) { // 把函数参数改名为 loopTime，彻底避�
                             if (audioInited) {
                                 audios.hit.currentTime = 0;
                                 audios.hit.play().catch(err => {});
-                                audios.bgm.play().catch(err => {});
                             }
                             if (o.isAshType()) {
                                 o.boom();
@@ -358,7 +311,6 @@ function gameLoop(loopTime) { // 把函数参数改名为 loopTime，彻底避�
                 }
             }
 
-            // 计分
             if (!dino.isDead) {
                 scoreTimer += 20;
                 if (scoreTimer >= 500) {
@@ -366,7 +318,6 @@ function gameLoop(loopTime) { // 把函数参数改名为 loopTime，彻底避�
                     scoreTimer = 0;
                 }
             }
-            // 绘制分数
             ctx.fillStyle = '#000';
             ctx.font = 'bold 24px 黑体';
             ctx.fillText(String(score).padStart(6, '0'), 700, 30);
@@ -374,29 +325,24 @@ function gameLoop(loopTime) { // 把函数参数改名为 loopTime，彻底避�
             requestAnimationFrame(gameLoop);
         }
 
-
-        // ===================== 4. 事件监听（简化版，确保横屏后显示） =====================
-        // 点击/触摸页面初始化音频（适配手机端）
+        // ===================== 4. 事件监听 =====================
         function initAudio() {
             if (!audioInited) {
                 audios.bgm.load();
                 audios.hit.load();
                 audios.jump.load();
                 audioInited = true;
-                console.log("音频已初始化，背景音乐开始播放");
             }
             if (audioInited && !dino.isDead && !finish) {
                 audios.bgm.play().catch(err => {});
             }
         }
 
-        // 跳跃事件：支持键盘空格+鼠标点击+手机触摸
         function jumpAction() {
             dino.jump();
             initAudio();
         }
 
-        // 键盘事件
         document.addEventListener('keydown', (e) => {
             if (e.code === 'Space') {
                 e.preventDefault();
@@ -404,39 +350,32 @@ function gameLoop(loopTime) { // 把函数参数改名为 loopTime，彻底避�
             }
         });
 
-        // 鼠标点击事件
         canvas.addEventListener('mousedown', (e) => {
             e.preventDefault();
             jumpAction();
         });
 
-        // 手机触摸事件
         canvas.addEventListener('touchstart', (e) => {
             e.preventDefault();
             jumpAction();
         }, { passive: false });
 
-        // ✅ 简化版屏幕自适应：直接让 Canvas 占据最大空间
-        function resizeCanvas() {
-            // 强制重绘 Canvas，避免横屏后黑屏
-            const temp = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            ctx.putImageData(temp, 0, 0);
-            console.log("屏幕尺寸变化，Canvas 已重绘");
+        // ===================== 5. 启动游戏 =====================
+        let loadedCount = 0;
+        const totalImages = Object.keys(images).length;
+        for (let key in images) {
+            images[key].onload = () => {
+                loadedCount++;
+                if (loadedCount === totalImages) {
+                    requestAnimationFrame(gameLoop);
+                }
+            };
+            images[key].onerror = (err) => {
+                console.error("图片加载失败：", key, images[key].src);
+                loadedCount++;
+                if (loadedCount === totalImages) requestAnimationFrame(gameLoop);
+            };
         }
-
-        // 窗口大小改变时重新调整
-        window.addEventListener('resize', resizeCanvas);
-        // 页面加载时先调整一次
-        resizeCanvas();
-
-        // ===================== 5. 等待图片加载完成后启动游戏 =====================
-        // ...（这里保持你之前的图片加载代码不变）...
-
     </script>
 </body>
 </html>
-
-
-
-
-
