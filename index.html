@@ -103,7 +103,7 @@
             jump() {
                 if (!this.jumpState && !this.isDead) {
                     this.jumpState = true;
-                    this.jumpValue = -2;
+                    this.jumpValue = -15;
                     if (audioInited) {
                         audios.jump.currentTime = 0;
                         audios.jump.play().catch(err => {});
@@ -379,6 +379,7 @@
     </script>
 </body>
 </html>
+
 
 
 
