@@ -73,7 +73,7 @@
                 this.jumpValue = 0;
                 this.jumpState = false;
                 this.stepTimer = 0;
-                this.JUMP_HEIGHT = 100;
+                this.JUMP_HEIGHT = 120;
                 this.LOWEST_Y = 205;
                 this.isDead = false;
             }
@@ -83,7 +83,7 @@
                     this.step();
                     if (this.jumpState) {
                         this.y += this.jumpValue;
-                        this.jumpValue += 5.0;
+                        this.jumpValue += 0.7;
                         if (this.y >= this.LOWEST_Y) {
                             this.y = this.LOWEST_Y;
                             this.jumpState = false;
@@ -379,5 +379,6 @@
     </script>
 </body>
 </html>
+
 
 
