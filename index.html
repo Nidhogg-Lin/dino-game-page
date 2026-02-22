@@ -73,7 +73,7 @@
                 this.jumpValue = 0;
                 this.jumpState = false;
                 this.stepTimer = 0;
-                this.JUMP_HEIGHT = 100;
+                this.JUMP_HEIGHT = 110;
                 this.LOWEST_Y = 205;
                 this.isDead = false;
             }
@@ -83,7 +83,7 @@
                     this.step();
                     if (this.jumpState) {
                         this.y += this.jumpValue;
-                        this.jumpValue += 0.7;
+                        this.jumpValue += 0.6;
                         if (this.y >= this.LOWEST_Y) {
                             this.y = this.LOWEST_Y;
                             this.jumpState = false;
@@ -103,7 +103,7 @@
             jump() {
                 if (!this.jumpState && !this.isDead) {
                     this.jumpState = true;
-                    this.jumpValue = -24;
+                    this.jumpValue = -20;
                     if (audioInited) {
                         audios.jump.currentTime = 0;
                         audios.jump.play().catch(err => {});
@@ -379,6 +379,7 @@
     </script>
 </body>
 </html>
+
 
 
 
