@@ -83,7 +83,7 @@
                     this.step();
                     if (this.jumpState) {
                         this.y += this.jumpValue;
-                        this.jumpValue += 0.8;
+                        this.jumpValue += 1.0;
                         if (this.y >= this.LOWEST_Y) {
                             this.y = this.LOWEST_Y;
                             this.jumpState = false;
@@ -379,3 +379,4 @@
     </script>
 </body>
 </html>
+
