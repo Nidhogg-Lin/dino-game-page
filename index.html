@@ -83,7 +83,7 @@
                     this.step();
                     if (this.jumpState) {
                         this.y += this.jumpValue;
-                        this.jumpValue += 0.6;
+                        this.jumpValue += 0.8;
                         if (this.y >= this.LOWEST_Y) {
                             this.y = this.LOWEST_Y;
                             this.jumpState = false;
@@ -103,7 +103,7 @@
             jump() {
                 if (!this.jumpState && !this.isDead) {
                     this.jumpState = true;
-                    this.jumpValue = -10;
+                    this.jumpValue = -5;
                     if (audioInited) {
                         audios.jump.currentTime = 0;
                         audios.jump.play().catch(err => {});
@@ -379,6 +379,7 @@
     </script>
 </body>
 </html>
+
 
 
 
